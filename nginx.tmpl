@@ -54,10 +54,34 @@ upstream {{ $host }} {
 {{ end }}
 }
 
+	{{ $crt := groupBy $containers "Env.SSL_CRT" }}
+	{{ $key := groupBy $containers "Env.SSL_KEY" }}
+
+	{{ if and (eq (len $crt) 1) (eq (len $key) 1) }}
+		server {
+			listen 80;
+			server_name {{ $host }};
+			rewrite ^(.*) https://{{ $host }}$1 permanent;
+		}
+	{{ end }}
+
 server {
 	gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
 
 	server_name {{ $host }};
+
+	{{ if and (eq (len $crt) 1) (eq (len $key) 1) }}
+		listen 443;
+		ssl on;
+		{{ range $crt, $value := $crt }}
+		     ssl_certificate /ssl/{{ $crt }};
+	    {{ end }}
+
+	{{ range $key, $value := $key }}
+		ssl_certificate_key /ssl/{{ $key }};
+	{{ end }}
+	{{ end }}
+
 	proxy_buffering off;
 	error_log /proc/self/fd/2;
 	access_log /proc/self/fd/1;
