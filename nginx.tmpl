@@ -56,6 +56,8 @@ upstream {{ $host }} {
 
 	{{ $crt := groupBy $containers "Env.SSL_CRT" }}
 	{{ $key := groupBy $containers "Env.SSL_KEY" }}
+	{{ $client_crt := groupBy $containers "Env.CLIENT_CA_CRT" }}
+
 
 	{{ if and (eq (len $crt) 1) (eq (len $key) 1) }}
 		server {
@@ -79,6 +81,13 @@ server {
 		{{ range $crt, $value := $crt }}
 		     ssl_certificate /ssl/{{ $crt }};
 	    {{ end }}
+
+        {{ if (eq (len $client_crt) 1) }}
+           ssl_verify_client on;
+    	   {{ range $client_crt, $value := $client_crt }}
+              ssl_client_certificate /ssl/{{ $client_crt }};
+           {{ end }}
+        {{ end }}
 
 	{{ range $key, $value := $key }}
 		ssl_certificate_key /ssl/{{ $key }};
