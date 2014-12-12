@@ -26,6 +26,8 @@ WORKDIR /app
 ADD . /app
 
 EXPOSE 80
+EXPOSE 443
 ENV DOCKER_HOST unix:///tmp/docker.sock
+VOLUME ["/ssl"]
 
 CMD ["forego", "start", "-r"]
